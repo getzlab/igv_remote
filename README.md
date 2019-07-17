@@ -30,9 +30,15 @@ igv.load_pair(tumor_bam=tumor_gspath, normal_bam=normal_gspath, genesymbol="TP53
 print("paired view generated!")
 ```
 
-# TODO
+Alternatively, identical script can be found as `run.py` in this repo - just call `python3 run.py`
+
+## Link
+
+I adapted socket script from [bio-playground](https://github.com/brentp/bio-playground/blob/master/igv/igv.py) , Thanks!
+
+## TODO
 
 Add a helper function to generate dataframe of interest like `testdf`.
 
-**Make it work**
+
 
