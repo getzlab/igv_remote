@@ -17,7 +17,7 @@ igv_remote.load_single(sock, # socket
                        collapse, squish) # representation params (default=F,T)
 
 # to get snapshot for paired location
-igv_remote.load_single(sock, 
+igv_remote.load_pair(sock, 
                        tumor_path, normal_path,# paired paths, tumor in the upper track
                        <misc position params>, 
                        imgfullpath, imgname, 
