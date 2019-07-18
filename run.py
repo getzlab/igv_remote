@@ -13,6 +13,9 @@ import pandas as pd
 
 testdf = pd.read_csv("test_df.csv")
 
+# initialize the socket
+igv_remote.connect()
+
 # set some view/save params
 igv_remote.set_saveopts(img_fulldir = "/home/qing/igv_snapshots/", img_basename = "test.png" ) # must be set!
 igv_remote.set_viewopts(collapse = False, squish = True, viewaspairs = True ) # optional

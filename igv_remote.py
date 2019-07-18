@@ -62,7 +62,6 @@ class IGV_remote:
             self.sock.close()
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._connect()
         self._set_viewopts(squish, collapse, viewaspairs)
     
     def _set_saveopts(self, img_fulldir, img_basename ):

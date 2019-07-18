@@ -9,7 +9,10 @@ The basic usage should be something like -
 ```python
 import igv_remote
 
-# initialize a socket by setting some params
+# initialize a socket 
+igv_remote.connect()
+
+# setting some params for save and view options
 igv_remote.set_saveopts(img_fulldir = "/home/qing/igv_snapshots/", img_basename = "test.png" ) # must be set!
 igv_remote.set_viewopts(collapse = False, squish = True, viewaspairs = True ) # optional
 
@@ -37,9 +40,7 @@ igv_remote.goto(socket, *(chr, start, end))
 
 A sample script can be found as `run.py` in this repo - **you need to adjust `imgfullpath` that works for you**. A sample data frame can be found at `test_df.csv` where it contains some gspaths of interest.
 
-## TODO
-
-Add a helper function to generate dataframe of interest like `testdf`.
+To generate the paired tumor-normal gspath as `testdf.csv`, please refer to `dalmatian_helper.py`  where there is an example at the end of file. To know more about Dalmatian, check [this repo](https://github.com/broadinstitute/dalmatian) 
 
 ## Troubleshooting
 
