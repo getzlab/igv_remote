@@ -11,43 +11,17 @@ within python using TCP sockets.
 @author: qingzhang
 """
 import socket
+import os
 
-
-
-def init(host="127.0.0.1", port=60151):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
-    print("socket initialized")
-    return(s)
-
-def send(s, cmd):
-    cmd = cmd + '\n'
-    s.send(cmd.encode('utf-8'))
-    return s.recv(2000).decode('utf-8').rstrip('\n')
-
-
-def goto(s, 
-         chromosome=None, start_pos=None, end_pos=None):
-    """
-    Note that the position params could be either list or single element.
-    A list of ch
-    """
-    if start_pos and end_pos:
-        start_pos ='{:,}'.format(start_pos)
-        end_pos = '{:,}'.format(end_pos)
-        position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
-        print("position to view:", position)
-    else: 
-        raise Exception("No view location specified")
-        return -1
-    send(s, "goto %s" % position)
 
 def append_id(filename, id):
     return "{0}_{2}.{1}".format(*filename.rsplit('.', 1) + [id])
 
-# a helper function to get chr ranges as list of tuple (chr, start, end)
 def parse_loc(chromosome, start_pos, end_pos):
-    # change both start and end to list
+    """
+    A helper function to parse location specifiers to list of tuples
+    """
+        # change both start and end to list
     if type(start_pos) != list:
         start_pos = [start_pos]
     if end_pos == None:
@@ -77,9 +51,46 @@ def parse_loc(chromosome, start_pos, end_pos):
     # get the list of tuples as input
     positions = list(zip(chromosome, start_pos, end_pos))
     return(positions)
+        
+        
+class IGV_remote:
+    sock=None
+    
+    def __init__(self):
+        if self.sock:
+            self.sock.close()
+        else:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def _connect(self, host="127.0.0.1", port=60151):
+        self.sock.connect((host, port))
+        print("socket initialized")
+    
+    def _send(self, cmd):
+        s = self.sock
+        cmd = cmd + '\n'
+        s.send(cmd.encode('utf-8'))
+        return s.recv(2000).decode('utf-8').rstrip('\n')
+    
+
+    def _goto(self, 
+             chromosome=None, start_pos=None, end_pos=None):
+        """
+        Note that the position params could be either list or single element.
+        examples: chromosome=2, start_pos=[34,3890,34859], end_pos = [3544, 6909, 34980]
+        """
+        if start_pos and end_pos:
+            start_pos ='{:,}'.format(start_pos)
+            end_pos = '{:,}'.format(end_pos)
+            position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
+            print("position to view:", position)
+        else: 
+            raise Exception("No view location specified")
+        self._send( "goto %s" % position)
 
 
-def load_single(s, url, 
+
+    def _load_single(self, url, 
                 chromosome=None, start_pos=None, end_pos=None,  
                 imgfulldir="/home/qing/igv_snapshots",imgname="testsingle.png", 
                 squish=True, collapse=False, viewaspairs=False):
@@ -98,31 +109,41 @@ def load_single(s, url,
         <imgname> is the name of our saved plot - acceptable file types are 
         .png, .jpg, or .svg
         """
+                # check if directory exists
+        if not os.path.exists(imgfulldir):
+            raise Exception("cannot locate diretory, please make sure it exists")
+        if not os.path.isabs(imgfulldir):
+            raise Exception("please specify absolute path, not relative")
         
-        send(s, "new ")
-        send(s, "load %s" % url)
+        # check if the image name has proper extension
+        accepted_extensions = ["png", "svg", "jpg"]
+        if not any(x in imgname for x in accepted_extensions):
+            raise Exception("filename has to contain extension, one of jpg/svg/png")
+            
+        self._send( "new ")
+        self._send( "load %s" % url)
         
         # get locations as list of tuples
         positions = parse_loc(chromosome, start_pos, end_pos)
         # -------- plot --------
         for i, position in enumerate(positions):
-            goto(s, *position)
+            self._goto( *position)
             
             if squish:
-                send(s, "squish ")
+                self._send( "squish ")
             if collapse:
-                send(s, "collapse ")
+                self._send( "collapse ")
             if viewaspairs:
-                send(s, "viewaspairs ")
-            send(s, "snapshotDirectory %s" % imgfulldir)
+                self._send( "viewaspairs ")
+            self._send( "snapshotDirectory %s" % imgfulldir)
             if imgname!=None:
                 newname = append_id(imgname, i)
-                send(s, "snapshot %s" % newname)
+                self._send( "snapshot %s" % newname)
             else: 
-                send(s, "snapshot %s" % imgname)
+                self._send( "snapshot %s" % imgname)
             
 
-def load_pair(s, tumor_bam, normal_bam, 
+    def _load_pair(self, tumor_bam, normal_bam, 
               chromosome=None, start_pos=None, end_pos=None,  
               imgfulldir="/home/qing/igv_snapshots", imgname="testpair.png", 
               squish=True, collapse=False, viewaspairs=False):
@@ -138,32 +159,54 @@ def load_pair(s, tumor_bam, normal_bam,
         <imgname> is the name of our saved plot - acceptable file types are 
         .png, .jpg, or .svg
         """        
+        
+        # check if directory exists
+        if not os.path.exists(imgfulldir):
+            raise Exception("cannot locate diretory, please make sure it exists")
+        if not os.path.isabs(imgfulldir):
+            raise Exception("please specify absolute path, not relative")
+        
+        # check if the image name has proper extension
+        accepted_extensions = ["png", "svg", "jpg"]
+        if not any(x in imgname for x in accepted_extensions):
+            raise Exception("filename has to contain extension, one of jpg/svg/png")
+        
+        
         # initialize pair view
-        send(s, "new ")
+        self._send("new ")
 
-        send(s, "load %s" % tumor_bam)
-        send(s, "load %s" % normal_bam)
+        self._send("load %s" % tumor_bam)
+        self._send("load %s" % normal_bam)
             
         # get the list of tuples as input
         positions = parse_loc(chromosome, start_pos, end_pos)
         
         # -------- plot --------
         for i, position in enumerate(positions):
-            goto(s, *position)
+            self._goto(*position)
             
             if squish:
-                send(s, "squish ")
+                self._send( "squish ")
             if collapse:
-                send(s, "collapse ")
+                self._send( "collapse ")
             if viewaspairs:
-                send(s, "viewaspairs ")
-            send(s, "snapshotDirectory %s" % imgfulldir)
+                self._send( "viewaspairs ")
+            self._send( "snapshotDirectory %s" % imgfulldir)
             if imgname!=None:
                 newname = append_id(imgname, i)
-                send(s, "snapshot %s" % newname)
+                self._send( "snapshot %s" % newname)
             else: 
-                send(s, "snapshot %s" % imgname)
+                self._send( "snapshot %s" % imgname)
     
+    def _close(self):
+        self.sock.close()
 
-def close(s):
-    s.close()
+if __name__ == "igv_remote":
+    ir = IGV_remote()
+    connect = ir._connect
+    goto = ir._goto
+    load_single = ir._load_single
+    load_pair = ir._load_pair
+    send = ir._send
+    close = ir._close
+    
