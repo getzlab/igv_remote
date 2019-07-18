@@ -1,5 +1,7 @@
 # igv_remote
 
+An attempt to automate snapshot pipeline from ipython.
+
 ## Usage
 
 The basic usage should be something like - 
@@ -14,21 +16,30 @@ igv_remote.load_single(sock, # socket
                        gspath, # gspath for a single path
                        <misc position params>, # see below
                        imgfullpath, imgname, # where to save
-                       collapse, squish) # representation params (default=F,T)
+                       collapse, squish, viewaspairs) # representation params (default=F,T,F)
 
 # to get snapshot for paired location
 igv_remote.load_pair(sock, 
-                       tumor_path, normal_path,# paired paths, tumor in the upper track
-                       <misc position params>, 
-                       imgfullpath, imgname, 
-                       collapse, squish) 
+                     tumor_path, normal_path,# paired paths, tumor in the upper track
+                     <misc position params>, 
+                     imgfullpath, imgname, 
+                     collapse, squish, viewaspairs) 
 # close the socket
 igv_remote.close(sock)
 ```
 
-The `<misc position params>` can be either specified as chromosome and start and end positions, e.g. `chromosome=12, start_pos=345729,end_pos=345789 `, or by gene symbol `genesymbol="TP53"`
+The `<misc position params>` can be specified as chromosome and start and end positions, e.g. `chromosome=12, start_pos=345729,end_pos=345789 ` and each of the input could be a list, e.g. `chromosome=12, start_pos=[345729, 345758, 345799], end_pos=[347000, 347090, 347200]`  In case of list input for locations, we will take multiple screen shots for each location, resulting in multiple images named as `<imagename_x.png>.`
 
-A sample script can be found as `run.py` in this repo - just call `python3 run.py` . A sample dataframe can be found at `test_df.csv` where it contains some gspaths of interest.
+There are also misc utilities including
+
+```python
+# generate list of tuples [(chr, start, end)] for input to igv_remote.goto
+igv_remote.parse_loc(chromosome, start, end)
+# send navigate command to server
+igv_remote.goto(socket, *(chr, start, end))
+```
+
+A sample script can be found as `run.py` in this repo - **you need to adjust `imgfullpath` that works for you**. A sample data frame can be found at `test_df.csv` where it contains some gspaths of interest.
 
 ## TODO
 
