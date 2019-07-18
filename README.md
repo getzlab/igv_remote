@@ -8,20 +8,18 @@ The basic usage should be something like -
 
 ```python
 import igv_remote
-# initialize a socket
-igv_remote.connect()
+
+# initialize a socket by setting some params
+igv_remote.set_saveopts(img_fulldir = "/home/qing/igv_snapshots/", img_basename = "test.png" ) # must be set!
+igv_remote.set_viewopts(collapse = False, squish = True, viewaspairs = True ) # optional
 
 # to get snapshot for a single location
 igv_remote.load_single(gspath, # gspath for a single path
-                       <misc position params>, # see below
-                       imgfullpath, imgname, # where to save
-                       collapse, squish, viewaspairs) # representation params (default=F,T,F)
+                       <misc position params>) # see details below
 
 # to get snapshot for paired location
 igv_remote.load_pair(tumor_path, normal_path,# paired paths, tumor in the upper track
-                     <misc position params>, 
-                     imgfullpath, imgname, 
-                     collapse, squish, viewaspairs) 
+                     <misc position params>) 
 # close the socket
 igv_remote.close()
 ```

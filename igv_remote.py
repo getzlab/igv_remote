@@ -21,7 +21,7 @@ def parse_loc(chromosome, start_pos, end_pos):
     """
     A helper function to parse location specifiers to list of tuples
     """
-        # change both start and end to list
+    # change both start and end to list
     if type(start_pos) != list:
         start_pos = [start_pos]
     if end_pos == None:
@@ -56,11 +56,34 @@ def parse_loc(chromosome, start_pos, end_pos):
 class IGV_remote:
     sock=None
     
-    def __init__(self):
+    def __init__(self, 
+                 squish = True, collapse = False, viewaspairs = False):
         if self.sock:
             self.sock.close()
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._connect()
+        self._set_viewopts(squish, collapse, viewaspairs)
+    
+    def _set_saveopts(self, img_fulldir, img_basename ):
+        # check if path is absolute and exits
+        if not os.path.exists(img_fulldir):
+            raise Exception("cannot locate diretory, please make sure it exists")
+        if not os.path.isabs(img_fulldir):
+            raise Exception("please specify absolute path, not relative")
+        
+        # check if the image name has proper extension
+        accepted_extensions = ["png", "svg", "jpg"]
+        if not any(x in img_basename for x in accepted_extensions):
+            raise Exception("filename has to contain extension, one of jpg/svg/png")
+        
+        self._img_fulldir = img_fulldir
+        self._img_basename = img_basename
+    
+    def _set_viewopts(self, squish, collapse, viewaspairs):
+        self._squish = squish
+        self._collapse = collapse
+        self._viewaspairs = viewaspairs
 
     def _connect(self, host="127.0.0.1", port=60151):
         self.sock.connect((host, port))
@@ -91,9 +114,7 @@ class IGV_remote:
 
 
     def _load_single(self, url, 
-                chromosome=None, start_pos=None, end_pos=None,  
-                imgfulldir="/home/qing/igv_snapshots",imgname="testsingle.png", 
-                squish=True, collapse=False, viewaspairs=False):
+                chromosome=None, start_pos=None, end_pos=None):
         """
         <s> is the socket we initialized
         <url> is a gs url for your interested bam file
@@ -109,16 +130,6 @@ class IGV_remote:
         <imgname> is the name of our saved plot - acceptable file types are 
         .png, .jpg, or .svg
         """
-                # check if directory exists
-        if not os.path.exists(imgfulldir):
-            raise Exception("cannot locate diretory, please make sure it exists")
-        if not os.path.isabs(imgfulldir):
-            raise Exception("please specify absolute path, not relative")
-        
-        # check if the image name has proper extension
-        accepted_extensions = ["png", "svg", "jpg"]
-        if not any(x in imgname for x in accepted_extensions):
-            raise Exception("filename has to contain extension, one of jpg/svg/png")
             
         self._send( "new ")
         self._send( "load %s" % url)
@@ -127,26 +138,24 @@ class IGV_remote:
         positions = parse_loc(chromosome, start_pos, end_pos)
         # -------- plot --------
         for i, position in enumerate(positions):
-            self._goto( *position)
+            self._goto(*position)
             
-            if squish:
+            if self._squish:
                 self._send( "squish ")
-            if collapse:
+            if self._collapse:
                 self._send( "collapse ")
-            if viewaspairs:
+            if self._viewaspairs:
                 self._send( "viewaspairs ")
-            self._send( "snapshotDirectory %s" % imgfulldir)
-            if imgname!=None:
-                newname = append_id(imgname, i)
+            self._send( "snapshotDirectory %s" % self._img_fulldir)
+            if self._img_basename!=None:
+                newname = append_id(self._img_basename, i)
                 self._send( "snapshot %s" % newname)
             else: 
-                self._send( "snapshot %s" % imgname)
+                self._send( "snapshot %s" % self._img_basename)
             
 
     def _load_pair(self, tumor_bam, normal_bam, 
-              chromosome=None, start_pos=None, end_pos=None,  
-              imgfulldir="/home/qing/igv_snapshots", imgname="testpair.png", 
-              squish=True, collapse=False, viewaspairs=False):
+              chromosome=None, start_pos=None, end_pos=None):
         """
         <s> is the socket we initialized
         <tumor_bam> is a gs url for your interested tumor bam file
@@ -159,19 +168,6 @@ class IGV_remote:
         <imgname> is the name of our saved plot - acceptable file types are 
         .png, .jpg, or .svg
         """        
-        
-        # check if directory exists
-        if not os.path.exists(imgfulldir):
-            raise Exception("cannot locate diretory, please make sure it exists")
-        if not os.path.isabs(imgfulldir):
-            raise Exception("please specify absolute path, not relative")
-        
-        # check if the image name has proper extension
-        accepted_extensions = ["png", "svg", "jpg"]
-        if not any(x in imgname for x in accepted_extensions):
-            raise Exception("filename has to contain extension, one of jpg/svg/png")
-        
-        
         # initialize pair view
         self._send("new ")
 
@@ -185,18 +181,18 @@ class IGV_remote:
         for i, position in enumerate(positions):
             self._goto(*position)
             
-            if squish:
+            if self._squish:
                 self._send( "squish ")
-            if collapse:
+            if self._collapse:
                 self._send( "collapse ")
-            if viewaspairs:
+            if self._viewaspairs:
                 self._send( "viewaspairs ")
-            self._send( "snapshotDirectory %s" % imgfulldir)
-            if imgname!=None:
-                newname = append_id(imgname, i)
+            self._send( "snapshotDirectory %s" % self._img_fulldir)
+            if self._img_basename!=None:
+                newname = append_id(self._img_basename, i)
                 self._send( "snapshot %s" % newname)
             else: 
-                self._send( "snapshot %s" % imgname)
+                self._send( "snapshot %s" % self._img_basename)
     
     def _close(self):
         self.sock.close()
@@ -204,6 +200,8 @@ class IGV_remote:
 if __name__ == "igv_remote":
     ir = IGV_remote()
     connect = ir._connect
+    set_viewopts = ir._set_viewopts
+    set_saveopts = ir._set_saveopts
     goto = ir._goto
     load_single = ir._load_single
     load_pair = ir._load_pair
