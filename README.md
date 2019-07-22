@@ -1,6 +1,6 @@
 # igv_remote
 
-An attempt to automate snapshot pipeline from ipython.
+An attempt to automate snapshot/navigate pipeline from ipython.
 
 ## Usage
 
@@ -35,16 +35,37 @@ There are also misc utilities including
 # generate list of tuples [(chr, start, end)] for input to igv_remote.goto
 igv_remote.parse_loc(chromosome, start, end)
 # send navigate command to server
-igv_remote.goto(socket, *(chr, start, end))
+igv_remote.goto(*(chr, start, end))
 ```
 
 A sample script can be found as `run.py` in this repo - **you need to adjust `imgfullpath` that works for you**. A sample data frame can be found at `test_df.csv` where it contains some gspaths of interest.
 
-To generate the paired tumor-normal gspath as `testdf.csv`, please refer to `dalmatian_helper.py`  where there is an example at the end of file. To know more about Dalmatian, check [this repo](https://github.com/broadinstitute/dalmatian) 
+## Helpers
+
+There are some helper function to parse firecloud workspace data from Dalmatian to your desired format in **dalmatian_helper.py**. `get_pairs_from_ws` and `match_pair` allows you to match tumor-normal pair for each sample_id, producing a dataframe with columns for `cohort` `tss` `pid` `tumor` and `normal`.
+
+```python
+import dalmatian
+ws_list = dalmatian.firecloud.api.list_workspaces().json()
+match_pair(get_pairs_from_wsname(re_match_wsname(ws_list)))
+```
+
+Please note that current implementation only works the format of "controlledAccess" data.
+
+**locate_view.py** is another helper function that helps to match your callset to your interested genes and cohort.
+
+```python
+find_view(<callset pd dataframe>, 
+          <dataframe from match_pair>,
+          <interested gene>,
+          <TCGA cohort>) #optional
+```
+
+The result will be a list of dictionary with `cohort`, `pid`,`gene` and `position`.
 
 ## Troubleshooting
 
 * if something like `(Errno 111] Connection refused`  try to check if your IGV session is live or not.
 * in case of `[Errno 32] *Broken pipe*` try to restart IGV
-* `imgfullpath ` must be **full path**, something like "/home/hurrialice/snapshots" and you need to make sure it exists!
+* `imgfullpath ` must be **full absolute path**, something like "/home/hurrialice/snapshots" and you need to make sure it exists!
 * try run batch job directly on IGV for debug could be helpful

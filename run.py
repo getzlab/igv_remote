@@ -27,8 +27,8 @@ igv_remote.load_single(sample_gspath,
 print("single bam view generated")
 
 # paired bam snapshots
-tumor_gspath = testdf["NB"][0]
-normal_gspath = testdf["TP"][0]
+normal_gspath = "gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/ACC/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-OR-A5J1-10A-01D-A29L-10.bam"
+tumor_gspath = "gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/ACC/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-OR-A5J1-01A-11D-A29I-10.bam"
 igv_remote.load_pair(tumor_bam=tumor_gspath, normal_bam=normal_gspath, 
           chromosome = 12, start_pos = [23853, 45728, 352884])
 print("paired bam view generated")
