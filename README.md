@@ -1,3 +1,5 @@
+
+
 # igv_remote
 
 An attempt to automate snapshot/navigate pipeline from ipython.
@@ -16,13 +18,10 @@ igv_remote.connect()
 igv_remote.set_saveopts(img_fulldir = "/home/qing/igv_snapshots/", img_basename = "test.png" ) # must be set!
 igv_remote.set_viewopts(collapse = False, squish = True, viewaspairs = True ) # optional
 
-# to get snapshot for a single location
-igv_remote.load_single(gspath, # gspath for a single path
+# to get snapshot for a single/paired location
+igv_remote.load_single(gspath1, <optional gspath2>,
                        <misc position params>) # see details below
 
-# to get snapshot for paired location
-igv_remote.load_pair(tumor_path, normal_path,# paired paths, tumor in the upper track
-                     <misc position params>) 
 # close the socket
 igv_remote.close()
 ```
@@ -34,6 +33,8 @@ There are also misc utilities including
 ```python
 # generate list of tuples [(chr, start, end)] for input to igv_remote.goto
 igv_remote.parse_loc(chromosome, start, end)
+# load bam file
+igv_remote.load(gspath, <optional gspath2>)
 # send navigate command to server
 igv_remote.goto(*(chr, start, end))
 ```
@@ -47,7 +48,7 @@ There are some helper function to parse firecloud workspace data from Dalmatian 
 ```python
 import dalmatian
 ws_list = dalmatian.firecloud.api.list_workspaces().json()
-match_pair(get_pairs_from_wsname(re_match_wsname(ws_list)))
+mp = match_pair(get_pairs_from_wsname(re_match_wsname(ws_list)))
 ```
 
 Please note that current implementation only works the format of "controlledAccess" data.
@@ -55,13 +56,38 @@ Please note that current implementation only works the format of "controlledAcce
 **locate_view.py** is another helper function that helps to match your callset to your interested genes and cohort.
 
 ```python
-find_view(<callset pd dataframe>, 
+ldict = find_view(<callset pd dataframe>,
           <dataframe from match_pair>,
-          <interested gene>,
-          <TCGA cohort>) #optional
+          <interested gene>, # "RNF5"
+          <TCGA cohort>) #optional, "BRCA"
 ```
 
-The result will be a list of dictionary with `cohort`, `pid`,`gene` and `position`.
+The result will be a list of dictionary with `cohort`, `pid`,`gene` and `position`. To parse it into the structure that we can copy and paste into VM ipython console, we can call `format_command` from **locate_view.py**
+
+```python
+format_command(ldict) # the result from `find_view`
+```
+
+```
+-------------------------------------------------
+
+igv_remote.send("new ")
+igv_remote.load("gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/BRCA/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-AC-A2BM-01A-11D-A21Q-09.bam","gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/BRCA/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-AC-A2BM-11A-13D-A21Q-09.bam")
+
+igv_remote.goto(6,32147809)
+igv_remote.goto(6,32147865)
+-------------------------------------------------
+
+igv_remote.send("new ")
+igv_remote.load("gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/BRCA/DNA/WXS/UCSC/ILLUMINA/TCGA_MC3.f8dd9e14-dfa2-490e-bc37-61b6f680289f.bam","gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/BRCA/DNA/WXS/UCSC/ILLUMINA/TCGA_MC3.f35e7064-c207-4ac9-8a17-973e6f90d878.bam")
+
+igv_remote.goto(6,32147865)
+-------------------------------------------------
+```
+
+## TODO
+
+Try to navigate and snapshot on local machine by `ssh -L`
 
 ## Troubleshooting
 

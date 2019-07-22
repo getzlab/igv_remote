@@ -55,6 +55,7 @@ def parse_loc(chromosome, start_pos, end_pos):
         
 class IGV_remote:
     sock=None
+    img_fulldir ="/tmp/igv-snapshots"
     
     def __init__(self, 
                  squish = True, collapse = False, viewaspairs = False):
@@ -94,6 +95,10 @@ class IGV_remote:
         s.send(cmd.encode('utf-8'))
         return s.recv(2000).decode('utf-8').rstrip('\n')
     
+    def _load(self, url1, url2=None):
+        self._send("load %s" % url1)
+        if url2:
+            self._send("load %s" % url2)
 
     def _goto(self, 
              chromosome=None, start_pos=None, end_pos=None):
@@ -101,6 +106,8 @@ class IGV_remote:
         Note that the position params could be either list or single element.
         examples: chromosome=2, start_pos=[34,3890,34859], end_pos = [3544, 6909, 34980]
         """
+        if (not end_pos) and start_pos:
+            end_pos = start_pos+1
         if start_pos and end_pos:
             start_pos ='{:,}'.format(start_pos)
             end_pos = '{:,}'.format(end_pos)
@@ -111,8 +118,7 @@ class IGV_remote:
         self._send( "goto %s" % position)
 
 
-
-    def _load_single(self, url, 
+    def _load_snap(self, url1, url2 = None, 
                 chromosome=None, start_pos=None, end_pos=None):
         """
         <s> is the socket we initialized
@@ -131,7 +137,7 @@ class IGV_remote:
         """
             
         self._send( "new ")
-        self._send( "load %s" % url)
+        self._load(*(url1, url2))
         
         # get locations as list of tuples
         positions = parse_loc(chromosome, start_pos, end_pos)
@@ -152,46 +158,6 @@ class IGV_remote:
             else: 
                 self._send( "snapshot %s" % self._img_basename)
             
-
-    def _load_pair(self, tumor_bam, normal_bam, 
-              chromosome=None, start_pos=None, end_pos=None):
-        """
-        <s> is the socket we initialized
-        <tumor_bam> is a gs url for your interested tumor bam file
-        <normal_bam> is a gs url for your interested normal bam file
-        <chromosome> is a number
-        <start_pos> is a number in unit of bp, so as the end_pos
-         ## note that we no longer accept gene symbol as input
-        <imgdir> is the path where you want to save the snapshots
-        need to be FULLPATH!
-        <imgname> is the name of our saved plot - acceptable file types are 
-        .png, .jpg, or .svg
-        """        
-        # initialize pair view
-        self._send("new ")
-
-        self._send("load %s" % tumor_bam)
-        self._send("load %s" % normal_bam)
-            
-        # get the list of tuples as input
-        positions = parse_loc(chromosome, start_pos, end_pos)
-        
-        # -------- plot --------
-        for i, position in enumerate(positions):
-            self._goto(*position)
-            
-            if self._squish:
-                self._send( "squish ")
-            if self._collapse:
-                self._send( "collapse ")
-            if self._viewaspairs:
-                self._send( "viewaspairs ")
-            self._send( "snapshotDirectory %s" % self._img_fulldir)
-            if self._img_basename!=None:
-                newname = append_id(self._img_basename, i)
-                self._send( "snapshot %s" % newname)
-            else: 
-                self._send( "snapshot %s" % self._img_basename)
     
     def _close(self):
         self.sock.close()
@@ -202,8 +168,8 @@ if __name__ == "igv_remote":
     set_viewopts = ir._set_viewopts
     set_saveopts = ir._set_saveopts
     goto = ir._goto
-    load_single = ir._load_single
-    load_pair = ir._load_pair
+    load = ir._load
+    load_snap = ir._load_snap
     send = ir._send
     close = ir._close
     
