@@ -14,10 +14,10 @@ import socket
 import os
 
 
-def append_id(filename, id):
+def _append_id(filename, id):
     return "{0}_{2}.{1}".format(*filename.rsplit('.', 1) + [id])
 
-def parse_loc(chromosome, start_pos, end_pos):
+def _parse_loc(chromosome, start_pos, end_pos):
     """
     A helper function to parse location specifiers to list of tuples
     """
@@ -146,7 +146,7 @@ class IGV_remote:
         self._load(*(url1, url2))
         
         # get locations as list of tuples
-        positions = parse_loc(chromosome, start_pos, end_pos)
+        positions = _parse_loc(chromosome, start_pos, end_pos)
         # -------- plot --------
         for i, position in enumerate(positions):
             self._goto(*position)
@@ -160,7 +160,7 @@ class IGV_remote:
             self._send( "sort %s" % self._sort)
             self._send( "snapshotDirectory %s" % self._img_fulldir)
             if self._img_basename!=None:
-                newname = append_id(self._img_basename, i)
+                newname = _append_id(self._img_basename, i)
                 self._send( "snapshot %s" % newname)
             else: 
                 self._send( "snapshot %s" % self._img_basename)
@@ -169,14 +169,12 @@ class IGV_remote:
     def _close(self):
         self.sock.close()
 
-if __name__ == "igv_remote":
-    ir = IGV_remote()
-    connect = ir._connect
-    set_viewopts = ir._set_viewopts
-    set_saveopts = ir._set_saveopts
-    goto = ir._goto
-    load = ir._load
-    load_snap = ir._load_snap
-    send = ir._send
-    close = ir._close
-    
+ir = IGV_remote()
+connect = ir._connect
+set_viewopts = ir._set_viewopts
+set_saveopts = ir._set_saveopts
+goto = ir._goto
+load = ir._load
+load_snap = ir._load_snap
+send = ir._send
+close = ir._close
