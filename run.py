@@ -9,14 +9,13 @@ a brief example
 """
 
 import igv_remote
-import pandas as pd
 
 # initialize the socket
 igv_remote.connect()
 
 # set some view/save params
 igv_remote.set_saveopts(img_fulldir = "/home/qing/igv_snapshots/", img_basename = "test.png" ) # must be set!
-igv_remote.set_viewopts(collapse = False, squish = True, viewaspairs = True ) # optional
+igv_remote.set_viewopts(collapse = False, squish = True, viewaspairs = True, sort="base" ) # optional
 
 # single bam snapshots
 sample_gspath = "gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/ACC/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-PK-A5HA-10A-01D-A29L-10.bam"

@@ -58,12 +58,14 @@ class IGV_remote:
     img_fulldir ="/tmp/igv-snapshots"
     
     def __init__(self, 
-                 squish = True, collapse = False, viewaspairs = False):
+                 squish = True, collapse = False, viewaspairs = False,
+                 sort="base"):
         if self.sock:
             self.sock.close()
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._set_viewopts(squish, collapse, viewaspairs)
+        self._set_viewopts(squish, collapse, viewaspairs, sort) 
+        # the view params are set as initialization
     
     def _set_saveopts(self, img_fulldir, img_basename ):
         # check if path is absolute and exits
@@ -80,10 +82,11 @@ class IGV_remote:
         self._img_fulldir = img_fulldir
         self._img_basename = img_basename
     
-    def _set_viewopts(self, squish, collapse, viewaspairs):
+    def _set_viewopts(self, squish, collapse, viewaspairs, sort):
         self._squish = squish
         self._collapse = collapse
         self._viewaspairs = viewaspairs
+        self._sort = sort
 
     def _connect(self, host="127.0.0.1", port=60151):
         self.sock.connect((host, port))
@@ -101,7 +104,8 @@ class IGV_remote:
             self._send("load %s" % url2)
 
     def _goto(self, 
-             chromosome=None, start_pos=None, end_pos=None):
+             chromosome=None, start_pos=None, end_pos=None,
+             sort="base"):
         """
         Note that the position params could be either list or single element.
         examples: chromosome=2, start_pos=[34,3890,34859], end_pos = [3544, 6909, 34980]
@@ -116,6 +120,15 @@ class IGV_remote:
         else: 
             raise Exception("No view location specified")
         self._send( "goto %s" % position)
+        
+        # specify view options
+        if self._squish:
+            self._send( "squish ")
+        if self._collapse:
+            self._send( "collapse ")
+        if self._viewaspairs:
+            self._send( "viewaspairs ")
+        self._send( "sort %s" % self._sort)
 
 
     def _load_snap(self, url1, url2 = None, 
@@ -127,13 +140,6 @@ class IGV_remote:
         <start_pos> is a number in unit of bp, so as the end_pos, 
         can also be a list of numbers
         ## <genesymbol> is no longer accepted as valid input!
-        can also be a list of symbols,
-        user need either chromosome input or gene input, 
-        otherwise will be error
-        <imgdir> is the path where you want to save the snapshots
-        need to be FULLPATH!
-        <imgname> is the name of our saved plot - acceptable file types are 
-        .png, .jpg, or .svg
         """
             
         self._send( "new ")
@@ -151,6 +157,7 @@ class IGV_remote:
                 self._send( "collapse ")
             if self._viewaspairs:
                 self._send( "viewaspairs ")
+            self._send( "sort %s" % self._sort)
             self._send( "snapshotDirectory %s" % self._img_fulldir)
             if self._img_basename!=None:
                 newname = append_id(self._img_basename, i)
