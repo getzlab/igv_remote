@@ -67,7 +67,7 @@ class IGV_remote:
         self._set_viewopts(squish, collapse, viewaspairs, sort) 
         # the view params are set as initialization
     
-    def _set_saveopts(self, img_fulldir, img_basename ):
+    def _set_saveopts(self, img_fulldir, img_basename, img_init_id=0 ):
         # check if path is absolute and exits
         if not os.path.exists(img_fulldir):
             raise Exception("cannot locate diretory, please make sure it exists")
@@ -81,6 +81,7 @@ class IGV_remote:
         
         self._img_fulldir = img_fulldir
         self._img_basename = img_basename
+        self._img_id = img_init_id
     
     def _set_viewopts(self, squish, collapse, viewaspairs, sort):
         self._squish = squish
@@ -148,7 +149,7 @@ class IGV_remote:
         # get locations as list of tuples
         positions = _parse_loc(chromosome, start_pos, end_pos)
         # -------- plot --------
-        for i, position in enumerate(positions):
+        for position in positions:
             self._goto(*position)
             
             if self._squish:
@@ -159,9 +160,10 @@ class IGV_remote:
                 self._send( "viewaspairs ")
             self._send( "sort %s" % self._sort)
             self._send( "snapshotDirectory %s" % self._img_fulldir)
-            if self._img_basename!=None:
-                newname = _append_id(self._img_basename, i)
+            if self._img_basename is not None:
+                newname = _append_id(self._img_basename, self._img_id)
                 self._send( "snapshot %s" % newname)
+                self._img_id += 1
             else: 
                 self._send( "snapshot %s" % self._img_basename)
             
