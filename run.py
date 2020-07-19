@@ -1,32 +1,37 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 17 11:20:05 2019
-
-a brief example
-
-@author: qingzhang
+An example showing snapshot functionalities for multiple bams
 """
 
-import igv_remote
+import igv_remote as ir
 
 # initialize the socket
-igv_remote.connect()
+ir.connect()
 
 # set some view/save params
-igv_remote.set_saveopts(img_fulldir = "/home/qing/igv_snapshots/", img_basename = "test.png" ) # must be set!
-igv_remote.set_viewopts(collapse = False, squish = True, viewaspairs = True, sort="base" ) # optional
+ir.set_saveopts(img_dir = "igv_snapshots/", img_basename = "test.png" ) # must be set!
+ir.set_viewopts(collapse = False, squish = True, viewaspairs = True, sort = "base" ) # optional
 
 # single bam snapshots
-sample_gspath = "gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/ACC/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-PK-A5HA-10A-01D-A29L-10.bam"
-igv_remote.load_snap(sample_gspath, 
-            chromosome = 12, start_pos = [23853, 45728, 352884])
+sample_gspath = "gs://fc-6febaccc-27b7-46d0-8d3f-8b52922499f8/aba98162-67cd-45bc-81db-3b9ab5d92eec/picardRealignment_indel/b11d9f3d-ae51-4ffa-a1d1-e00ae52c5826/call-index_tumor/MMRF_1078tumor.cleaned.bam"
+
+ir.new()
+ir.goto(12, 25398284)
+ir.load(sample_gspath)
+ir.snapshot()
 print("single bam view generated")
 
 # paired bam snapshots
-normal_gspath = "gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/ACC/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-OR-A5J1-10A-01D-A29L-10.bam"
-tumor_gspath = "gs://5aa919de-0aa0-43ec-9ec3-288481102b6d/tcga/ACC/DNA/WXS/BI/ILLUMINA/TCGA_MC3.TCGA-OR-A5J1-01A-11D-A29I-10.bam"
-igv_remote.load_snap(tumor_gspath, normal_gspath, 
-          chromosome = 12, start_pos = [23853, 45728, 352884])
+normal_gspath = "gs://fc-6febaccc-27b7-46d0-8d3f-8b52922499f8/aba98162-67cd-45bc-81db-3b9ab5d92eec/picardRealignment_indel/b11d9f3d-ae51-4ffa-a1d1-e00ae52c5826/call-index_tumor/MMRF_1078tumor.cleaned.bam"
+tumor_gspath = "gs://fc-6febaccc-27b7-46d0-8d3f-8b52922499f8/aba98162-67cd-45bc-81db-3b9ab5d92eec/picardRealignment_indel/b11d9f3d-ae51-4ffa-a1d1-e00ae52c5826/call-index_normal/MMRF_1078normal.cleaned.bam"
+
+ir.new()
+ir.goto(12, 25398284)
+ir.load(tumor_gspath, normal_gspath)
+ir.snapshot()
 print("paired bam view generated")
-igv_remote.close()
+
+
+
+ir.close()
