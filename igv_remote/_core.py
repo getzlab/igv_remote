@@ -69,23 +69,25 @@ class IGV_remote:
             self._send( "sort %s" % self._sort)
 
     def _goto(self, 
-             chromosome=None, start_pos=None, end_pos=None):
+             chromosome=None, pos=None, end_pos=None):
         """
         Note that the position params could be either list or single element.
         examples: chromosome=2, start_pos=[34,3890,34859], end_pos = [3544, 6909, 34980]
         """
         
         if end_pos is None:
-            start_pos = start_pos-1
+            
+            start_pos = pos-1
             end_pos = start_pos+2
-            position = "chr{chr}:{pos}".format(chr=chromosome, pos=start_pos)
+            #position = "chr{chr}:{pos}".format(chr=chromosome, pos=pos)
         elif start_pos and end_pos:
             start_pos ='{:,}'.format(start_pos)
             end_pos = '{:,}'.format(end_pos)
-            position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
             print("position to view:", position)
         else: 
             raise Exception("No view location specified")
+        
+        position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
         self._send( "goto %s" % position)
         
         # specify view options
@@ -95,7 +97,7 @@ class IGV_remote:
             self._send( "collapse ")
         if self._viewaspairs:
             self._send( "viewaspairs ")
-        self._send( "sort %s" % self._sort)
+        self._send( "sort {}".format(self._sort))
 
     def _snapshot(self):
         self._send( "snapshotDirectory %s" % self._img_fulldir)

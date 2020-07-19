@@ -19,7 +19,7 @@ sample_gspath = "gs://fc-6febaccc-27b7-46d0-8d3f-8b52922499f8/aba98162-67cd-45bc
 ir.new()
 ir.goto(12, 25398284)
 ir.load(sample_gspath)
-# ir.snapshot()
+ir.snapshot()
 print("single bam view generated")
 
 # paired bam snapshots
@@ -29,9 +29,9 @@ tumor_gspath = "gs://fc-6febaccc-27b7-46d0-8d3f-8b52922499f8/aba98162-67cd-45bc-
 ir.new()
 ir.goto(12, 25398284)
 ir.load(tumor_gspath, normal_gspath)
-# ir.snapshot()
+ir.snapshot()
 print("paired bam view generated")
 
 
 
-igv_remote.close()
+ir.close()
