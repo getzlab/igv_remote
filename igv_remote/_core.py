@@ -101,7 +101,7 @@ class IGV_remote:
             raise Exception("No view location specified")
         
         position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
-                    print("position to view:", position)
+        print("position to view:", position)
 
         self._send( "goto %s" % position)
         self._adjust_viewopts()
