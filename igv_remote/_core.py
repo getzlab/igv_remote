@@ -66,8 +66,21 @@ class IGV_remote:
             raise Exception("Please provide at least one URL to load")
         for url in urls:
             self._send("load %s" % url)
-            self._send( "sort %s" % self._sort)
+            self._adjust_viewopts()
 
+
+    def _adjust_viewopts(self):
+        # specify view options
+        if self._squish:
+            self._send( "squish ")
+        if self._collapse:
+            self._send( "collapse ")
+        if self._viewaspairs:
+            self._send( "viewaspairs ")
+        self._send( "sort {}".format(self._sort))
+    
+    
+    
     def _goto(self, 
              chromosome=None, pos=None, end_pos=None):
         """
@@ -83,21 +96,16 @@ class IGV_remote:
         elif start_pos and end_pos:
             start_pos ='{:,}'.format(start_pos)
             end_pos = '{:,}'.format(end_pos)
-            print("position to view:", position)
-        else: 
+            
+        else:
             raise Exception("No view location specified")
         
         position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
+                    print("position to view:", position)
+
         self._send( "goto %s" % position)
+        self._adjust_viewopts()
         
-        # specify view options
-        if self._squish:
-            self._send( "squish ")
-        if self._collapse:
-            self._send( "collapse ")
-        if self._viewaspairs:
-            self._send( "viewaspairs ")
-        self._send( "sort {}".format(self._sort))
 
     def _snapshot(self):
         self._send( "snapshotDirectory %s" % self._img_fulldir)
