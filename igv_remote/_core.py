@@ -9,7 +9,19 @@ import os
 
 def _append_id(filename, id):
     return "{0}_{2}.{1}".format(*filename.rsplit('.', 1) + [id])
+
+def _parse_loc(chromosome, pos1, pos2=None):
+    if pos2 is None:
+        start_pos = int(pos1-1)
+        end_pos = int(pos1+1)
+    elif pos1 and pos2:
+        start_pos ='{:,}'.format(int(pos1))
+        end_pos = '{:,}'.format(int(pos2))
         
+    else:
+        raise Exception("No view location specified")
+    position= 'chr{}:{}-{}'.format(int(chromosome),start_pos, end_pos)
+    return position
         
 class IGV_remote:
     sock=None
@@ -79,33 +91,17 @@ class IGV_remote:
             self._send( "viewaspairs ")
         self._send( "sort {}".format(self._sort))
     
-    
-    
     def _goto(self, 
-             chromosome=None, pos=None, end_pos=None):
-        """
-        Note that the position params could be either list or single element.
-        examples: chromosome=2, start_pos=[34,3890,34859], end_pos = [3544, 6909, 34980]
-        """
-        
-        if end_pos is None:
-            
-            start_pos = pos-1
-            end_pos = start_pos+2
-            #position = "chr{chr}:{pos}".format(chr=chromosome, pos=pos)
-        elif start_pos and end_pos:
-            start_pos ='{:,}'.format(start_pos)
-            end_pos = '{:,}'.format(end_pos)
-            
-        else:
-            raise Exception("No view location specified")
-        
-        position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
+             chromosome=None, pos1=None, pos2=None):
+
+        position = _parse_loc(chromosome, pos1, pos2)
         print("position to view:", position)
 
         self._send( "goto %s" % position)
         self._adjust_viewopts()
-        
+    
+    def goto_multiple(self, chr1, pos1, chr2, pos2):
+        self._send("goto {} {}".format(_parse_loc(chr1, pos1),  _parse_loc(chr2, pos2)))
 
     def _snapshot(self):
         self._send( "snapshotDirectory %s" % self._img_fulldir)
