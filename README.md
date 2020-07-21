@@ -41,13 +41,13 @@ ir.snapshot()
 ir.close()
 ```
 
-Similar structure can be found at`run.py`, please log in with Google account and change the BAM paths to your authorized ones. For more complex port commands that are not implemented, please use `ir.send(<your port command>)` or make a PR!
+Similar structure can be found at`examples/run.py`, please log in with Google account and change the BAM paths to your authorized ones. For more complex port commands that are not implemented, please use `ir.send(<your port command>)` or make a PR!
 
 
 ## FAQ
 
 - How to interact with DRS url?
-  - As far as we know, IGV does not stream DRS url. However if a DRS url contains UUID, you can use UUID to generate a signed url (`http://...`) which IGV can acept. Detailed instructions are in [igv-gdc-buddy](https://github.com/getzlab/igv_gdc_buddy).
+  - As far as we know, IGV does not stream DRS url. However if a DRS url contains UUID, you can use UUID to generate a signed url (`http://...`) which IGV can acept. Detailed instructions are in [igv-gdc-buddy](https://github.com/getzlab/igv_gdc_buddy). `examples/batch_igv.py` is an example utilizing such interaction.
 
 ## Links
 
