@@ -109,8 +109,11 @@ class IGV_remote:
 
         self._send( "goto %s" % position)
     
-    def _goto_multiple(self, chr1, pos1, chr2, pos2, expand=20):
-        self._send("goto {} {}".format(_parse_loc(chr1, pos1, None, expand),  _parse_loc(chr2, pos2, None, expand)))
+    def _goto_multiple(self, expand=20, **loci):
+        """
+        goto_multiple(expand=20, chr1=<seqname of first panel>, chr2=<seqname of second panel>, pos1=<position of first panel>, pos2=<position of second panel>)
+        """
+        self._send("goto {} {}".format(_parse_loc(loci['chr1'], loci['pos1'], None, expand),  _parse_loc(loci['chr2'], loci['pos2'], None, expand)))
 
     def _snapshot(self):
         self._send( "snapshotDirectory %s" % self._img_fulldir)
