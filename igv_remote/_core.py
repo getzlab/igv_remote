@@ -10,30 +10,32 @@ import os
 def _append_id(filename, id):
     return "{0}_{2}.{1}".format(*filename.rsplit('.', 1) + [id])
 
-def _parse_loc(chromosome, pos1, pos2=None):
+def _parse_loc(chromosome, pos1, pos2=None, expand=20):
+    if expand < 20:
+        print("IGV expands left and right margin by at least 20bp")
+        expand=20
+    start_pos = int(pos1-expand)
     if pos2 is None:
-        start_pos = int(pos1-1)
-        end_pos = int(pos1+1)
-    elif pos1 and pos2:
-        start_pos ='{:,}'.format(int(pos1))
-        end_pos = '{:,}'.format(int(pos2))
-        
+        end_pos = int(pos1+expand)
     else:
-        raise Exception("No view location specified")
+        end_pos = int(pos2)
+    start_pos ='{:,}'.format(int(start_pos))
+    end_pos = '{:,}'.format(int(end_pos))
     position= 'chr{}:{}-{}'.format(int(chromosome),start_pos, end_pos)
+    print("Position to view: {}".format(position))
     return position
         
 class IGV_remote:
     sock=None
     
     def __init__(self, 
-                 squish = True, collapse = False, viewaspairs = False,
+                 view_type="collapsed", viewaspairs = False,
                  sort="base"):
         if self.sock:
             self.sock.close()
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._set_viewopts(squish, collapse, viewaspairs, sort) 
+        self._set_viewopts(view_type, viewaspairs, sort) 
         # the view params are set during initialization
     
     def _set_saveopts(self, img_dir, img_basename, img_init_id=0) :
@@ -52,9 +54,10 @@ class IGV_remote:
         self._img_basename = img_basename
         self._img_id = img_init_id
     
-    def _set_viewopts(self, squish, collapse, viewaspairs, sort):
-        self._squish = squish
-        self._collapse = collapse
+    def _set_viewopts(self, view_type, viewaspairs, sort):
+        if view_type not in ['squished', 'collapsed', 'expanded']:
+            raise Exception("view_type must be one of [squished, collapsed, expanded]")
+        self._view_type = view_type
         self._viewaspairs = viewaspairs
         self._sort = sort
 
@@ -82,26 +85,32 @@ class IGV_remote:
 
 
     def _adjust_viewopts(self):
+        
         # specify view options
-        if self._squish:
+        if self._view_type == "squished":
             self._send( "squish ")
-        if self._collapse:
+        elif self._view_type == "collapsed":
             self._send( "collapse ")
+        elif self._view_type == "expanded":
+            self._send("expand ")
+        else:
+            print("view_type other than squished/collapsed/expanded cannot be understood, will use expand")
+            self._send("expand ")
+
         if self._viewaspairs:
             self._send( "viewaspairs ")
         self._send( "sort {}".format(self._sort))
     
     def _goto(self, 
-             chromosome=None, pos1=None, pos2=None):
+             chromosome=None, pos1=None, pos2=None, expand=20):
 
-        position = _parse_loc(chromosome, pos1, pos2)
+        position = _parse_loc(chromosome, pos1, pos2, expand)
         print("position to view:", position)
 
         self._send( "goto %s" % position)
-        self._adjust_viewopts()
     
-    def goto_multiple(self, chr1, pos1, chr2, pos2):
-        self._send("goto {} {}".format(_parse_loc(chr1, pos1),  _parse_loc(chr2, pos2)))
+    def _goto_multiple(self, chr1, pos1, chr2, pos2, expand=20):
+        self._send("goto {} {}".format(_parse_loc(chr1, pos1, None, expand),  _parse_loc(chr2, pos2, None, expand)))
 
     def _snapshot(self):
         self._send( "snapshotDirectory %s" % self._img_fulldir)
@@ -121,4 +130,5 @@ load = ir._load
 send = ir._send
 close = ir._close
 new = ir._new
+goto_multiple = ir._goto_multiple
 snapshot = ir._snapshot
