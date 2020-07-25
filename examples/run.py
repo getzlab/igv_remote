@@ -4,7 +4,7 @@
 An example showing snapshot functionalities for multiple bams
 """
 
-import igv_remote as ir
+from .. import igv_remote as ir
 
 # initialize the socket
 ir.connect()

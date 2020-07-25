@@ -1,4 +1,4 @@
-from igv_remote import igv_remote as ir
+from .. import igv_remote as ir
 import numpy as np
 import pandas as pd
 # generate localhost http format

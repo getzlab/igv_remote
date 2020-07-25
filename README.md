@@ -23,18 +23,23 @@ However we also provided some wrappers for better UI, such as `load`, `goto` etc
 ```
 import igv_remote as ir
 
-
 # init socket
 ir.connect()
 
-
 # set view params
 ir.set_saveopts(img_dir = "igv_snapshots/", img_basename = "test.png" ) # must be set!
-ir.set_viewopts(collapse = False, squish = True, viewaspairs = True, sort = "base" ) # optional, this view options will be passed to all view panels
+ir.set_viewopts(view_type="collapsed", viewaspairs = True, sort = "base" ) # optional, this view options will be passed to all view panels
 
 # load views / snapshot
 ir.load(<tumor_bam>, <normal_bam>, ...)
+
+# view single locus
 ir.goto(<chr>, <pos>)
+
+# view multiple loci
+ir.go_to_multiple(chr1=<chr1>, pos1=<pos1>, chr2=<chr2>, pos2=<pos2>)
+
+# take a snapshot
 ir.snapshot()
 
 # close socket

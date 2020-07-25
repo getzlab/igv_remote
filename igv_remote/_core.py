@@ -21,7 +21,7 @@ def _parse_loc(chromosome, pos1, pos2=None, expand=20):
         end_pos = int(pos2)
     start_pos ='{:,}'.format(int(start_pos))
     end_pos = '{:,}'.format(int(end_pos))
-    position= 'chr{}:{}-{}'.format(int(chromosome),start_pos, end_pos)
+    position= '{}:{}-{}'.format(chromosome, start_pos, end_pos)
     print("Position to view: {}".format(position))
     return position
         
@@ -48,7 +48,7 @@ class IGV_remote:
         # check if the image name has proper extension
         accepted_extensions = ["png", "svg", "jpg"]
         if not any(x in img_basename for x in accepted_extensions):
-            raise Exception("filename has to contain extension, one of jpg/svg/png")
+            raise ValueError("filename has to contain extension, one of jpg/svg/png")
         
         self._img_fulldir = img_fulldir
         self._img_basename = img_basename
@@ -56,7 +56,7 @@ class IGV_remote:
     
     def _set_viewopts(self, view_type, viewaspairs, sort):
         if view_type not in ['squished', 'collapsed', 'expanded']:
-            raise Exception("view_type must be one of [squished, collapsed, expanded]")
+            raise ValueError("view_type must be one of [squished, collapsed, expanded]")
         self._view_type = view_type
         self._viewaspairs = viewaspairs
         self._sort = sort
@@ -78,7 +78,7 @@ class IGV_remote:
         print(urls)
         # self._send("new ")
         if len(urls) < 1:
-            raise Exception("Please provide at least one URL to load")
+            raise ValueError("Please provide at least one URL to load")
         for url in urls:
             self._send("load %s" % url)
             self._adjust_viewopts()
@@ -102,18 +102,38 @@ class IGV_remote:
         self._send( "sort {}".format(self._sort))
     
     def _goto(self, 
-             chromosome=None, pos1=None, pos2=None, expand=20):
+             chromosome, start_pos, end_pos=None, expand=20):
+        """
+        if only start_pos is supplied, we will expand view range by 'expand' parameter
+        """
 
-        position = _parse_loc(chromosome, pos1, pos2, expand)
+        position = _parse_loc(chromosome, start_pos, end_pos, expand)
         print("position to view:", position)
 
         self._send( "goto %s" % position)
     
-    def _goto_multiple(self, expand=20, **loci):
+    def _goto_multiple(self, expand=20, **kwargs):
         """
         goto_multiple(expand=20, chr1=<seqname of first panel>, chr2=<seqname of second panel>, pos1=<position of first panel>, pos2=<position of second panel>)
         """
-        self._send("goto {} {}".format(_parse_loc(loci['chr1'], loci['pos1'], None, expand),  _parse_loc(loci['chr2'], loci['pos2'], None, expand)))
+        chrpos = { "chr" : {}, "pos" : {} }
+        try:
+            for k, v in kwargs.items():
+                arg = re.match(r'^(chr|pos)(\d+)$', k)
+                if arg is not None:
+                    chrpos[arg[1]][arg[2]] = v
+                else:
+                    raise Exception
+            if chrpos["chr"].keys() != chrpos["pos"].keys():
+                raise Exception
+        except:
+            raise ValueError("When specifying multiple loci, arguments must be of the format chr1 = <chr1>, pos1 = <pos1>, ..., chrN = <chrN>, posN = <posN>")
+        
+        positions = []
+        for (_, chrv), (_, posv) in zip(chrpos['chr'].items(), chrpos['pos'].items()):
+            positions.append(_parse_loc(chrv, posv, None, expand))
+
+        self._send("goto {}".format(" ".join(positions)))
 
     def _snapshot(self):
         self._send( "snapshotDirectory %s" % self._img_fulldir)
