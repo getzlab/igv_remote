@@ -5,7 +5,7 @@ core wrappers for send command
 """
 import socket
 import os
-
+import re
 
 def _append_id(filename, id):
     return "{0}_{2}.{1}".format(*filename.rsplit('.', 1) + [id])
@@ -121,7 +121,7 @@ class IGV_remote:
             for k, v in kwargs.items():
                 arg = re.match(r'^(chr|pos)(\d+)$', k)
                 if arg is not None:
-                    chrpos[arg[1]][arg[2]] = v
+                    chrpos[arg.group(1)][arg.group(2)] = v
                 else:
                     raise Exception
             if chrpos["chr"].keys() != chrpos["pos"].keys():

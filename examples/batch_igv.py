@@ -1,4 +1,4 @@
-from .. import igv_remote as ir
+import igv_remote as ir
 import numpy as np
 import pandas as pd
 # generate localhost http format
@@ -10,8 +10,8 @@ def format_url(uuid):
 df = pd.read_csv("sv-demo.tsv", sep = "\t")
 df = df.sort_values(['case_id','seqnames', 'start'])
 
-# only look at the ones that do not match
-df = df[df.if_match == 0]
+# only look at the ones that match
+df = df[df.if_match == 1]
 
 # set up igv_remote
 ir.connect()
