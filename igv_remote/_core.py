@@ -5,23 +5,37 @@ core wrappers for send command
 """
 import socket
 import os
-
+import re
 
 def _append_id(filename, id):
     return "{0}_{2}.{1}".format(*filename.rsplit('.', 1) + [id])
-        
+
+def _parse_loc(chromosome, pos1, pos2=None, expand=20):
+    if expand < 20:
+        print("IGV expands left and right margin by at least 20bp")
+        expand=20
+    start_pos = int(pos1-expand)
+    if pos2 is None:
+        end_pos = int(pos1+expand)
+    else:
+        end_pos = int(pos2)
+    start_pos ='{:,}'.format(int(start_pos))
+    end_pos = '{:,}'.format(int(end_pos))
+    position= '{}:{}-{}'.format(chromosome, start_pos, end_pos)
+    print("Position to view: {}".format(position))
+    return position
         
 class IGV_remote:
     sock=None
     
     def __init__(self, 
-                 squish = True, collapse = False, viewaspairs = False,
+                 view_type="collapsed", viewaspairs = False,
                  sort="base"):
         if self.sock:
             self.sock.close()
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._set_viewopts(squish, collapse, viewaspairs, sort) 
+        self._set_viewopts(view_type, viewaspairs, sort) 
         # the view params are set during initialization
     
     def _set_saveopts(self, img_dir, img_basename, img_init_id=0) :
@@ -34,15 +48,16 @@ class IGV_remote:
         # check if the image name has proper extension
         accepted_extensions = ["png", "svg", "jpg"]
         if not any(x in img_basename for x in accepted_extensions):
-            raise Exception("filename has to contain extension, one of jpg/svg/png")
+            raise ValueError("filename has to contain extension, one of jpg/svg/png")
         
         self._img_fulldir = img_fulldir
         self._img_basename = img_basename
         self._img_id = img_init_id
     
-    def _set_viewopts(self, squish, collapse, viewaspairs, sort):
-        self._squish = squish
-        self._collapse = collapse
+    def _set_viewopts(self, view_type, viewaspairs, sort):
+        if view_type not in ['squished', 'collapsed', 'expanded']:
+            raise ValueError("view_type must be one of [squished, collapsed, expanded]")
+        self._view_type = view_type
         self._viewaspairs = viewaspairs
         self._sort = sort
 
@@ -63,49 +78,62 @@ class IGV_remote:
         print(urls)
         # self._send("new ")
         if len(urls) < 1:
-            raise Exception("Please provide at least one URL to load")
+            raise ValueError("Please provide at least one URL to load")
         for url in urls:
             self._send("load %s" % url)
             self._adjust_viewopts()
 
 
     def _adjust_viewopts(self):
+        
         # specify view options
-        if self._squish:
+        if self._view_type == "squished":
             self._send( "squish ")
-        if self._collapse:
+        elif self._view_type == "collapsed":
             self._send( "collapse ")
+        elif self._view_type == "expanded":
+            self._send("expand ")
+        else:
+            print("view_type other than squished/collapsed/expanded cannot be understood, will use expand")
+            self._send("expand ")
+
         if self._viewaspairs:
             self._send( "viewaspairs ")
         self._send( "sort {}".format(self._sort))
     
-    
-    
     def _goto(self, 
-             chromosome=None, pos=None, end_pos=None):
+             chromosome, start_pos, end_pos=None, expand=20):
         """
-        Note that the position params could be either list or single element.
-        examples: chromosome=2, start_pos=[34,3890,34859], end_pos = [3544, 6909, 34980]
+        if only start_pos is supplied, we will expand view range by 'expand' parameter
         """
-        
-        if end_pos is None:
-            
-            start_pos = pos-1
-            end_pos = start_pos+2
-            #position = "chr{chr}:{pos}".format(chr=chromosome, pos=pos)
-        elif start_pos and end_pos:
-            start_pos ='{:,}'.format(start_pos)
-            end_pos = '{:,}'.format(end_pos)
-            
-        else:
-            raise Exception("No view location specified")
-        
-        position= 'chr{}:{}-{}'.format(chromosome,start_pos, end_pos)
+
+        position = _parse_loc(chromosome, start_pos, end_pos, expand)
         print("position to view:", position)
 
         self._send( "goto %s" % position)
-        self._adjust_viewopts()
+    
+    def _goto_multiple(self, expand=20, **kwargs):
+        """
+        goto_multiple(expand=20, chr1=<seqname of first panel>, chr2=<seqname of second panel>, pos1=<position of first panel>, pos2=<position of second panel>)
+        """
+        chrpos = { "chr" : {}, "pos" : {} }
+        try:
+            for k, v in kwargs.items():
+                arg = re.match(r'^(chr|pos)(\d+)$', k)
+                if arg is not None:
+                    chrpos[arg.group(1)][arg.group(2)] = v
+                else:
+                    raise Exception
+            if chrpos["chr"].keys() != chrpos["pos"].keys():
+                raise Exception
+        except:
+            raise ValueError("When specifying multiple loci, arguments must be of the format chr1 = <chr1>, pos1 = <pos1>, ..., chrN = <chrN>, posN = <posN>")
         
+        positions = []
+        for (_, chrv), (_, posv) in zip(chrpos['chr'].items(), chrpos['pos'].items()):
+            positions.append(_parse_loc(chrv, posv, None, expand))
+
+        self._send("goto {}".format(" ".join(positions)))
 
     def _snapshot(self):
         self._send( "snapshotDirectory %s" % self._img_fulldir)
@@ -125,4 +153,5 @@ load = ir._load
 send = ir._send
 close = ir._close
 new = ir._new
+goto_multiple = ir._goto_multiple
 snapshot = ir._snapshot
