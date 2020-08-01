@@ -37,7 +37,7 @@ ir.load(<tumor_bam>, <normal_bam>, ...)
 ir.goto(<chr>, <pos>)
 
 # view multiple loci
-ir.go_to_multiple(chr1=<chr1>, pos1=<pos1>, chr2=<chr2>, pos2=<pos2>)
+ir.goto_multiple(chr1=<chr1>, pos1=<pos1>, chr2=<chr2>, pos2=<pos2>)
 
 # take a snapshot
 ir.snapshot()
