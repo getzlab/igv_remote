@@ -28,8 +28,9 @@ def _parse_loc(chromosome, pos1, pos2=None, expand=20):
 class IGV_remote:
     sock=None
     
-    def __init__(self):
+    def __init__(self, view_type='collapsed', sort='base'): 
         self.sock = None
+        self._set_viewopts(view_type=view_type, sort=sort)
     
     def _set_saveopts(self, img_dir, img_basename, img_init_id=0) :
         # check if path is absolute and exits
@@ -37,7 +38,7 @@ class IGV_remote:
             print("Initializing a directory called {} in current dir".format(img_dir))
             os.mkdir(img_dir)
         img_fulldir = os.path.abspath(img_dir)
-        
+        print("Snapshots are available in {}".format(img_fulldir))
         # check if the image name has proper extension
         accepted_extensions = ["png", "svg", "jpg"]
         if not any(x in img_basename for x in accepted_extensions):
@@ -64,10 +65,10 @@ class IGV_remote:
 
     def _send(self, cmd):
         assert self.sock is not None
-        with self.sock as s:
-            cmd = cmd + '\n'
-            s.send(cmd.encode('utf-8'))
-            s.recv(2000).decode('utf-8').rstrip('\n')
+        s=self.sock
+        cmd = cmd + '\n'
+        s.send(cmd.encode('utf-8'))
+        s.recv(2000).decode('utf-8').rstrip('\n')
     
     def _load(self, *urls):
         print(urls)
@@ -81,13 +82,6 @@ class IGV_remote:
 
     def _adjust_viewopts(self):
         
-	# make sure view_opts have been set
-        try:
-            self._view_type
-        except:
-            print("View options hasn't been set, using the default [view_type='collapsed', sort='base']")
-            self._set_viewopts(view_type = 'collapsed', sort = 'base')
-	
         # specify view options
         if self._view_type == "squished":
             self._send( "squish ")
@@ -136,7 +130,7 @@ class IGV_remote:
         self._send("goto {}".format(" ".join(positions)))
 
     def _snapshot(self):
-        assert self._image_fulldir is not None,"Please set view optins with ir.set_saveopts() first"
+        assert self._image_fulldir is not None, "Please set view optins with ir.set_saveopts() first"
         self._send( "snapshotDirectory %s" % self._img_fulldir)
         newname = _append_id(self._img_basename, self._img_id)
         self._send( "snapshot %s" % newname)

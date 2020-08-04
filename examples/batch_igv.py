@@ -16,7 +16,7 @@ df = df[df.if_match == 1]
 # set up igv_remote
 ir.connect()
 ir.set_saveopts(img_dir = "igv_snapshots", img_basename = "sv.png" ) # must be set!
-ir.set_viewopts(view_type = "collapsed", viewaspairs = False, sort = "base") # optional
+ir.set_viewopts(view_type = "collapsed", sort = "base") # optional
 prev_tumor = ""
 print(df)
 

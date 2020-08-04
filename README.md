@@ -5,7 +5,15 @@ Interacting with IGV desktop over a port with IGV batch commands in Python.
 
 ## Pre-requisite
 
-A running IGV with proper authorization
+- Installation
+
+```
+git clone https://github.com/getzlab/igv_remote.git
+cd igv_remote
+pip install .
+```
+
+Please make sure your IGV is running with proper authorization (to access controlled-access files)
 
 ## Usage
 
@@ -28,7 +36,7 @@ ir.connect()
 
 # set view params
 ir.set_saveopts(img_dir = "igv_snapshots/", img_basename = "test.png" ) # must be set!
-ir.set_viewopts(view_type="collapsed", viewaspairs = True, sort = "base" ) # optional, this view options will be passed to all view panels
+ir.set_viewopts(view_type="collapsed", sort = "base" ) # optional, this view options will be passed to all view panels
 
 # load views / snapshot
 ir.load(<tumor_bam>, <normal_bam>, ...)
