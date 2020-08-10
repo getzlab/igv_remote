@@ -10,8 +10,12 @@ import igv_remote as ir
 ir.connect()
 
 # set some view/save params
-ir.set_saveopts(img_dir = "igv_snapshots/", img_basename = "test.png" ) # must be set!
-ir.set_viewopts(collapse = False, squish = True, viewaspairs = True, sort = "base" ) # optional
+# save options are needed only if you are taking snapshots
+# the following config will allow you to save snapshots to '$(pwd)/igv_snapshots/test_0.png'
+ir.set_saveopts(img_dir = "igv_snapshots/", img_basename = "test.png" ) 
+
+# view options are used to configure the appearance of IGV, the defualt would be:
+ir.set_viewopts(view_type = 'collapsed', sort = "base" ) # optional
 
 # single bam snapshots
 sample_gspath = "gs://..."

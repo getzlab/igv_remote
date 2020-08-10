@@ -28,15 +28,9 @@ def _parse_loc(chromosome, pos1, pos2=None, expand=20):
 class IGV_remote:
     sock=None
     
-    def __init__(self, 
-                 view_type="collapsed", viewaspairs = False,
-                 sort="base"):
-        if self.sock:
-            self.sock.close()
-        else:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._set_viewopts(view_type, viewaspairs, sort) 
-        # the view params are set during initialization
+    def __init__(self, view_type='collapsed', sort='base'): 
+        self.sock = None
+        self._set_viewopts(view_type=view_type, sort=sort)
     
     def _set_saveopts(self, img_dir, img_basename, img_init_id=0) :
         # check if path is absolute and exits
@@ -44,7 +38,7 @@ class IGV_remote:
             print("Initializing a directory called {} in current dir".format(img_dir))
             os.mkdir(img_dir)
         img_fulldir = os.path.abspath(img_dir)
-        
+        print("Snapshots are available in {}".format(img_fulldir))
         # check if the image name has proper extension
         accepted_extensions = ["png", "svg", "jpg"]
         if not any(x in img_basename for x in accepted_extensions):
@@ -54,14 +48,15 @@ class IGV_remote:
         self._img_basename = img_basename
         self._img_id = img_init_id
     
-    def _set_viewopts(self, view_type, viewaspairs, sort):
+    def _set_viewopts(self, view_type,  sort):
         if view_type not in ['squished', 'collapsed', 'expanded']:
             raise ValueError("view_type must be one of [squished, collapsed, expanded]")
         self._view_type = view_type
-        self._viewaspairs = viewaspairs
         self._sort = sort
 
     def _connect(self, host="127.0.0.1", port=60151):
+        assert self.sock is None
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((host, port))
         print("socket initialized")
     
@@ -69,10 +64,11 @@ class IGV_remote:
         self._send("new ")
 
     def _send(self, cmd):
-        s = self.sock
+        assert self.sock is not None
+        s=self.sock
         cmd = cmd + '\n'
         s.send(cmd.encode('utf-8'))
-        return s.recv(2000).decode('utf-8').rstrip('\n')
+        s.recv(2000).decode('utf-8').rstrip('\n')
     
     def _load(self, *urls):
         print(urls)
@@ -97,8 +93,6 @@ class IGV_remote:
             print("view_type other than squished/collapsed/expanded cannot be understood, will use expand")
             self._send("expand ")
 
-        if self._viewaspairs:
-            self._send( "viewaspairs ")
         self._send( "sort {}".format(self._sort))
     
     def _goto(self, 
@@ -136,6 +130,7 @@ class IGV_remote:
         self._send("goto {}".format(" ".join(positions)))
 
     def _snapshot(self):
+        assert self._image_fulldir is not None, "Please set view optins with ir.set_saveopts() first"
         self._send( "snapshotDirectory %s" % self._img_fulldir)
         newname = _append_id(self._img_basename, self._img_id)
         self._send( "snapshot %s" % newname)
@@ -143,6 +138,8 @@ class IGV_remote:
 
     def _close(self):
         self.sock.close()
+        print("socket closed")
+        self.sock = None
 
 ir = IGV_remote()
 connect = ir._connect
