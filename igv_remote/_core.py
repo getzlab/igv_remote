@@ -103,6 +103,8 @@ class IGV_remote:
 
         position = _parse_loc(chromosome, start_pos, end_pos, expand)
         self._send( "goto %s" % position)
+        # make sure viewopts are preserved
+        self._adjust_viewopts()
     
     def _goto_multiple(self, expand=20, **kwargs):
         """
@@ -126,8 +128,10 @@ class IGV_remote:
             positions.append(_parse_loc(chrv, posv, None, expand))
 
         self._send("goto {}".format(" ".join(positions)))
+        # make sure viewopts are preserved
+        self._adjust_viewopts()
 
-    def _snapshot(self):
+    def _snapshot(self): # snapshot as-is
         assert self._img_fulldir is not None, "Please set view optins with ir.set_saveopts() first"
         self._send( "snapshotDirectory %s" % self._img_fulldir)
         newname = _append_id(self._img_basename, self._img_id)
