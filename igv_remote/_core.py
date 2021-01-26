@@ -130,7 +130,7 @@ class IGV_remote:
         self._send("goto {}".format(" ".join(positions)))
 
     def _snapshot(self):
-        assert self._image_fulldir is not None, "Please set view optins with ir.set_saveopts() first"
+        assert self._img_fulldir is not None, "Please set view optins with ir.set_saveopts() first"
         self._send( "snapshotDirectory %s" % self._img_fulldir)
         newname = _append_id(self._img_basename, self._img_id)
         self._send( "snapshot %s" % newname)
