@@ -102,8 +102,6 @@ class IGV_remote:
         """
 
         position = _parse_loc(chromosome, start_pos, end_pos, expand)
-        print("position to view:", position)
-
         self._send( "goto %s" % position)
     
     def _goto_multiple(self, expand=20, **kwargs):
