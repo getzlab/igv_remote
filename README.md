@@ -20,7 +20,9 @@ Please make sure your IGV is running with proper authorization (to access contro
 The most fundamental method is `send`, which accepts a string as described in [igv-commands](https://software.broadinstitute.org/software/igv/PortCommands). 
 
 ```
-import igv_remote as ir
+import igv_remote
+ir = igv_remote.IGV_remote()
+
 ir.connect()
 ir.send("genome hg19")  # any port commands
 ir.close()
@@ -29,7 +31,8 @@ ir.close()
 However we also provided some wrappers for better UI, such as `load`, `goto` etc. Here is a fuller example:
 
 ```
-import igv_remote as ir
+import igv_remote
+ir = igv_remote.IGV_remote()
 
 # init socket
 ir.connect()

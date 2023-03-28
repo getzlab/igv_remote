@@ -32,7 +32,7 @@ class IGV_remote:
         self.sock = None
         self._set_viewopts(view_type=view_type, sort=sort)
     
-    def _set_saveopts(self, img_dir, img_basename, img_init_id=0) :
+    def set_saveopts(self, img_dir, img_basename, img_init_id=0) :
         # check if path is absolute and exits
         if not os.path.exists(img_dir):
             print("Initializing a directory called {} in current dir".format(img_dir))
@@ -54,13 +54,13 @@ class IGV_remote:
         self._view_type = view_type
         self._sort = sort
 
-    def _connect(self, host="127.0.0.1", port=60151):
+    def connect(self, host="127.0.0.1", port=60151):
         assert self.sock is None
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((host, port))
         print("socket initialized")
     
-    def _new(self):
+    def new(self):
         self._send("new ")
 
     def _send(self, cmd):
@@ -70,7 +70,7 @@ class IGV_remote:
         s.send(cmd.encode('utf-8'))
         s.recv(2000).decode('utf-8').rstrip('\n')
     
-    def _load(self, *urls):
+    def load(self, *urls):
         print(urls)
         # self._send("new ")
         if len(urls) < 1:
@@ -95,7 +95,7 @@ class IGV_remote:
 
         self._send( "sort {}".format(self._sort))
     
-    def _goto(self, 
+    def goto(self, 
              chromosome, start_pos, end_pos=None, expand=20):
         """
         if only start_pos is supplied, we will expand view range by 'expand' parameter
@@ -106,7 +106,7 @@ class IGV_remote:
         # make sure viewopts are preserved
         self._adjust_viewopts()
     
-    def _goto_multiple(self, expand=20, **kwargs):
+    def goto_multiple(self, expand=20, **kwargs):
         """
         goto_multiple(expand=20, chr1=<seqname of first panel>, chr2=<seqname of second panel>, pos1=<position of first panel>, pos2=<position of second panel>)
         """
@@ -131,26 +131,14 @@ class IGV_remote:
         # make sure viewopts are preserved
         self._adjust_viewopts()
 
-    def _snapshot(self): # snapshot as-is
+    def snapshot(self): # snapshot as-is
         assert self._img_fulldir is not None, "Please set view optins with ir.set_saveopts() first"
         self._send( "snapshotDirectory %s" % self._img_fulldir)
         newname = _append_id(self._img_basename, self._img_id)
         self._send( "snapshot %s" % newname)
         self._img_id += 1
 
-    def _close(self):
+    def close(self):
         self.sock.close()
         print("socket closed")
         self.sock = None
-
-ir = IGV_remote()
-connect = ir._connect
-set_viewopts = ir._set_viewopts
-set_saveopts = ir._set_saveopts
-goto = ir._goto
-load = ir._load
-send = ir._send
-close = ir._close
-new = ir._new
-goto_multiple = ir._goto_multiple
-snapshot = ir._snapshot
