@@ -1,9 +1,0 @@
-README.md
-setup.py
-igv_remote/__init__.py
-igv_remote/_core.py
-igv_remote.egg-info/PKG-INFO
-igv_remote.egg-info/SOURCES.txt
-igv_remote.egg-info/dependency_links.txt
-igv_remote.egg-info/not-zip-safe
-igv_remote.egg-info/top_level.txt

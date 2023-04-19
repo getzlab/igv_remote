@@ -1,8 +1,0 @@
-Metadata-Version: 2.1
-Name: igv-remote
-Version: 0.1
-Summary: Python interface for IGV batch commands
-Home-page: https://github.com/getzlab/igv_remote
-Author: Qing Zhang
-Author-email: qing@broadinstitute.org
-License: MIT
