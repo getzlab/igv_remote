@@ -64,14 +64,21 @@ class IGV_remote:
     def new(self):
         self._send_cmd('new')
 
-    def load(self, *urls):
+    def load(self, *urls, indices = None):
         self.verboseprint(urls)
 
         if len(urls) < 1:
             raise ValueError("Please provide at least one URL to load")
-        for url in urls:
-            self._send_cmd("load %s" % url)
-            self._adjust_viewopts()
+        if indices is not None:
+            if len(urls) != len(indices):
+                raise ValueError("Number of BAMs does not match number of indices!")
+            for url, idx in zip(urls, indices):
+                self._send_cmd(f"load {url} index={idx}")
+                self._adjust_viewopts()
+        else:
+            for url in urls:
+                self._send_cmd(f"load {url}")
+                self._adjust_viewopts()
 
     def _parse_loc(self, chromosome, pos1, pos2=None, expand=20):
         if expand < 20:
